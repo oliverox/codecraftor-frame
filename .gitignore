@@ -24,6 +24,7 @@ coverage
 .grunt
 
 components
+components/index.js
 
 # Bower dependency directory (https://bower.io/)
 bower_components
