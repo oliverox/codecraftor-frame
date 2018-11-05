@@ -1,4 +1,3 @@
-// import MainFrame from './MainFrame/MainFrame';
-// import CraftFrame from './CraftFrame/CraftFrame';
+import Craft from './Craft/Craft';
 
-// export { MainFrame, CraftFrame };
+export { Craft };

@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import '../../node_modules/normalize.css/normalize.css';
 import '../../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '../../node_modules/@blueprintjs/core/lib/css/blueprint.css';
 import './CraftFrame.scss';
+
+import { Craft } from '../components';
 
 /* AppFrame */
 
@@ -41,7 +44,11 @@ class AppFrame extends Component {
 
   render() {
     console.log('rendering CraftFrame');
-    return <div id="container">CraftFrame</div>;
+    return (
+      <Router>
+        <Route path="/:craftId" exact component={Craft} />
+      </Router>
+    );
   }
 }
 
