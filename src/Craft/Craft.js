@@ -13,24 +13,25 @@ class Craft extends React.Component {
     };
     this.pageRefreshed = true;
     this.unsubscribeFromSnapshot = false;
+    this.updateCraft = this.updateCraft.bind(this);
     this.addComponent = this.addComponent.bind(this);
     this.updateAppConfig = this.updateAppConfig.bind(this);
     this.handleRemoteAction = this.handleRemoteAction.bind(this);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const { match } = this.props;
     const db = firebase.firestore();
     db.settings({ timestampsInSnapshots: true });
-    const docRef = db
+    this.docRef = db
       .collection(process.env.REACT_APP_CRAFTS_COLLECTION)
       .doc(match.params.craftId);
-    docRef
+    this.docRef
       .get()
       .then(doc => {
         if (doc.exists) {
           console.log('Craft exists => Subscribe to onSnapshot');
-          this.unsubscribeFromSnapshot = docRef.onSnapshot(
+          this.unsubscribeFromSnapshot = this.docRef.onSnapshot(
             this.handleRemoteAction
           );
           this.setState({
@@ -72,6 +73,25 @@ class Craft extends React.Component {
     this.setState({
       config: { ...config }
     });
+    this.updateCraft();
+  }
+
+  updateCraft() {
+    this.docRef.get().then(doc => {
+      const { actions } = doc.data();
+      if (actions.length > 0) {
+        actions.filter(act => act.action === 'ADD')
+        .forEach(act => {
+          console.log('??????????????????????????? act=', act);
+          this.addComponent({
+            index: act.index,
+            label: act.label,
+            children: 'Hello World',
+            props: act.props || {}
+          });
+        })
+      }
+    });
   }
 
   handleRemoteAction(doc) {
@@ -80,9 +100,7 @@ class Craft extends React.Component {
     if (this.pageRefreshed) {
       this.pageRefreshed = false;
       console.log('Rebuild craft with', updates);
-      this.setState({
-        config: updates.config
-      });
+      this.updateAppConfig(updates.config);
     } else {
       if (updates.actions.length > 0) {
         const latestUpdate = updates.actions[updates.actions.length - 1];
