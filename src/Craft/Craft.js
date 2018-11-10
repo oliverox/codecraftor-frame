@@ -1,18 +1,20 @@
 import React from 'react';
 import firebase from 'firebase/app';
 import { Button } from '@blueprintjs/core';
-import SpinnerOverlay from '../../components/SpinnerOverlay/SpinnerOverlay';
+import SpinnerOverlay from '../components/SpinnerOverlay/SpinnerOverlay';
 
 class Craft extends React.Component {
   constructor() {
     super();
     this.state = {
       isLoading: true,
-      body: []
+      body: [],
+      config: {}
     };
     this.pageRefreshed = true;
     this.unsubscribeFromSnapshot = false;
     this.addComponent = this.addComponent.bind(this);
+    this.updateAppConfig = this.updateAppConfig.bind(this);
     this.handleRemoteAction = this.handleRemoteAction.bind(this);
   }
 
@@ -66,13 +68,24 @@ class Craft extends React.Component {
     });
   }
 
+  updateAppConfig(config) {
+    console.log('App config updated:', config);
+    this.setState({
+      config: { ...config }
+    });
+  }
+
   handleRemoteAction(doc) {
     let updates = doc.data();
+    console.log('handleRemoteAction() - updates=', updates);
     if (this.pageRefreshed) {
       this.pageRefreshed = false;
       console.log('Rebuild craft with', updates);
+      this.setState({
+        config: updates.config
+      });
     } else {
-      if (updates.actions) {
+      if (updates.actions.length > 0) {
         const latest = updates.actions[updates.actions.length - 1];
         console.log('New update: ', latest);
         switch (latest.action) {
@@ -87,26 +100,35 @@ class Craft extends React.Component {
           default:
             break;
         }
-      }
-      else {
-        console.log('App config updated:', updates.config);
+      } else {
+        this.updateAppConfig(updates.config);
       }
     }
   }
 
   render() {
+    console.log('+++++++++++++++++++++++++++++++', this.state.config.uiToolkit);
     const { match } = this.props;
-    const { isLoading } = this.state;
-    return isLoading ? (
-      <React.Fragment>
-        <SpinnerOverlay isOpen={isLoading} />
-      </React.Fragment>
-    ) : (
-      <React.Fragment>
-        <h2>Craft: {match.params.craftId}</h2>
-        {this.state.body}
-      </React.Fragment>
-    );
+    const { isLoading, config } = this.state;
+    if (isLoading) {
+      return (
+        <React.Fragment>
+          <SpinnerOverlay isOpen={isLoading} />
+        </React.Fragment>
+      );
+    } else {
+      console.log('config.uiToolkit=', config.uiToolkit);
+      if (config.uiToolkit === 'blueprint') {
+        import('@blueprintjs/icons/lib/css/blueprint-icons.css');
+        import('@blueprintjs/core/lib/css/blueprint.css');
+      }
+      return (
+        <React.Fragment>
+          <h2>Craft: {match.params.craftId}</h2>
+          {this.state.body}
+        </React.Fragment>
+      );
+    }
   }
 }
 

@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Route } from 'react-router-dom';
 import firebase from 'firebase/app';
 import 'firebase/firestore';
 import '../../node_modules/normalize.css/normalize.css';
-import '../../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css';
-import '../../node_modules/@blueprintjs/core/lib/css/blueprint.css';
+// import '../../node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css';
+// import '../../node_modules/@blueprintjs/core/lib/css/blueprint.css';
 import './CraftFrame.scss';
 
 import Craft from '../Craft/Craft';
