@@ -1,7 +1,7 @@
 import React from 'react';
 import firebase from 'firebase/app';
-import { Button } from '@blueprintjs/core';
 import SpinnerOverlay from '../components/SpinnerOverlay/SpinnerOverlay';
+import createNewComponent from './createNewComponent';
 
 class Craft extends React.Component {
   constructor() {
@@ -49,22 +49,21 @@ class Craft extends React.Component {
     this.unsubscribeFromSnapshot();
   }
 
-  addComponent({ ComponentType, children, props }) {
-    console.log('addComponent:', ComponentType);
-    const { body } = this.state;
-    const newBody = body.slice();
-    let newComponent = <React.Fragment />;
-    if (ComponentType === 'Button') {
-      newComponent = (
-        <Button key={newBody.length} {...props}>
-          {children}
-        </Button>
+  addComponent(componentMeta) {
+    console.log('addComponent:', componentMeta);
+    const ui = this.state.config.uiToolkit;
+    return createNewComponent(ui, componentMeta.index).then(NewComponent => {
+      const { body } = this.state;
+      const newBody = body.slice();
+      newBody.push(
+        <NewComponent key={newBody.length} {...componentMeta.props}>
+          {componentMeta.children}
+        </NewComponent>
       );
-    }
-    newBody.push(newComponent);
-    console.log('newBody=', newBody);
-    this.setState({
-      body: newBody
+      console.log('newBody=', newBody);
+      this.setState({
+        body: newBody
+      });
     });
   }
 
@@ -86,14 +85,17 @@ class Craft extends React.Component {
       });
     } else {
       if (updates.actions.length > 0) {
-        const latest = updates.actions[updates.actions.length - 1];
-        console.log('New update: ', latest);
-        switch (latest.action) {
+        const latestUpdate = updates.actions[updates.actions.length - 1];
+        console.log('New update: ', latestUpdate);
+        switch (latestUpdate.action) {
           case 'ADD':
             this.addComponent({
-              ComponentType: latest.component,
+              index: latestUpdate.index,
+              label: latestUpdate.label,
               children: 'Hello World',
-              props: {}
+              props: {
+                intent: 'success'
+              }
             });
             break;
 
@@ -107,8 +109,6 @@ class Craft extends React.Component {
   }
 
   render() {
-    console.log('+++++++++++++++++++++++++++++++', this.state.config.uiToolkit);
-    const { match } = this.props;
     const { isLoading, config } = this.state;
     if (isLoading) {
       return (
@@ -124,7 +124,6 @@ class Craft extends React.Component {
       }
       return (
         <React.Fragment>
-          <h2>Craft: {match.params.craftId}</h2>
           {this.state.body}
         </React.Fragment>
       );
