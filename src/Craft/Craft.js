@@ -134,7 +134,6 @@ class Craft extends React.Component {
         </React.Fragment>
       );
     } else {
-      console.log('config.uiToolkit=', config.uiToolkit);
       if (config.uiToolkit === 'blueprint') {
         import(`${process.env.REACT_APP_BLUEPRINT_ICONS_CSS}`);
         import(`${process.env.REACT_APP_BLUEPRINT_CORE_CSS}`);
