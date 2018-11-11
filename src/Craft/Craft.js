@@ -85,11 +85,17 @@ class Craft extends React.Component {
       if (actions.length > 0) {
         actions.filter(act => act.action === 'ADD')
         .forEach(act => {
+          let children;
+          if (act.childNodes && act.childNodes.length > 0) {
+            children = act.childNodes;
+          } else {
+            children = act.childText || 'Sample text';
+          }
           this.addComponent({
             index: act.index,
             label: act.label,
-            children: 'Hello World',
-            props: act.props || {}
+            props: act.props || {},
+            children,
           });
         })
       }
@@ -109,13 +115,17 @@ class Craft extends React.Component {
         console.log('New update: ', latestUpdate);
         switch (latestUpdate.action) {
           case 'ADD':
+            let children;
+            if (latestUpdate.childNodes && latestUpdate.childNodes.length > 0) {
+              children = latestUpdate.childNodes;
+            } else {
+              children = latestUpdate.childText || 'Sample text';
+            }
             this.addComponent({
               index: latestUpdate.index,
               label: latestUpdate.label,
-              children: 'Sample Text',
-              props: {
-                intent: 'success'
-              }
+              props: latestUpdate.props,
+              children,
             });
             break;
           
