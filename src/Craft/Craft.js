@@ -138,6 +138,11 @@ class Craft extends React.Component {
         import(`${process.env.REACT_APP_BLUEPRINT_ICONS_CSS}`);
         import(`${process.env.REACT_APP_BLUEPRINT_CORE_CSS}`);
       }
+      if (config.globalCss && config.globalCss !== false) {
+        if (config.globalCss.backgroundColor) {
+          document.body.style.backgroundColor = config.globalCss.backgroundColor;
+        }
+      }
       return (
         <React.Fragment>
           {this.state.body}
