@@ -68,12 +68,15 @@ class Craft extends React.Component {
     });
   }
 
-  updateAppConfig(config) {
+  updateAppConfig(config, doUpdateCraft = false) {
     console.log('App config updated:', config);
+    const newConfig = Object.assign(this.state.config, config);
     this.setState({
-      config: { ...config }
+      config: newConfig
     });
-    this.updateCraft();
+    if (doUpdateCraft) {
+      this.updateCraft();
+    }
   }
 
   updateCraft() {
@@ -99,7 +102,7 @@ class Craft extends React.Component {
     if (this.pageRefreshed) {
       this.pageRefreshed = false;
       console.log('Rebuild craft with', updates);
-      this.updateAppConfig(updates.config);
+      this.updateAppConfig(updates.config, true);
     } else {
       if (updates.actions.length > 0) {
         const latestUpdate = updates.actions[updates.actions.length - 1];
@@ -115,12 +118,16 @@ class Craft extends React.Component {
               }
             });
             break;
-
+          
+          case 'CONFIG':
+            // Any config update is purely a global css update at this point
+            this.updateAppConfig(latestUpdate, false);
+            break;
           default:
             break;
         }
       } else {
-        this.updateAppConfig(updates.config);
+        this.updateAppConfig(updates.config, true);
       }
     }
   }
