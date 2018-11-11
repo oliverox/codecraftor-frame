@@ -82,7 +82,6 @@ class Craft extends React.Component {
       if (actions.length > 0) {
         actions.filter(act => act.action === 'ADD')
         .forEach(act => {
-          console.log('??????????????????????????? act=', act);
           this.addComponent({
             index: act.index,
             label: act.label,
@@ -110,7 +109,7 @@ class Craft extends React.Component {
             this.addComponent({
               index: latestUpdate.index,
               label: latestUpdate.label,
-              children: 'Hello World',
+              children: 'Sample Text',
               props: {
                 intent: 'success'
               }
@@ -137,8 +136,8 @@ class Craft extends React.Component {
     } else {
       console.log('config.uiToolkit=', config.uiToolkit);
       if (config.uiToolkit === 'blueprint') {
-        import('@blueprintjs/icons/lib/css/blueprint-icons.css');
-        import('@blueprintjs/core/lib/css/blueprint.css');
+        import(`${process.env.REACT_APP_BLUEPRINT_ICONS_CSS}`);
+        import(`${process.env.REACT_APP_BLUEPRINT_CORE_CSS}`);
       }
       return (
         <React.Fragment>
