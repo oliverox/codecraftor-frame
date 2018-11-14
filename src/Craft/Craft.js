@@ -56,10 +56,20 @@ class Craft extends React.Component {
     return createNewComponent(ui, componentMeta.index).then(NewComponent => {
       const { body } = this.state;
       const newBody = body.slice();
+      const { props } = componentMeta;
+      const propsObj = {};
+      Object.keys(props).forEach(key => {
+        if (key !== 'children') {
+          propsObj[key] = props[key].default;
+        }
+      });
+      propsObj.key = newBody.length;
       newBody.push(
-        <NewComponent key={newBody.length} {...componentMeta.props}>
-          {componentMeta.children}
-        </NewComponent>
+        React.createElement(
+          NewComponent,
+          { ...propsObj },
+          props.children.value || props.children.default
+        )
       );
       console.log('newBody=', newBody);
       this.setState({
@@ -80,24 +90,21 @@ class Craft extends React.Component {
   }
 
   updateCraft() {
+    this.setState({
+      body: []
+    });
     this.docRef.get().then(doc => {
       const { actions } = doc.data();
       if (actions.length > 0) {
-        actions.filter(act => act.action === 'ADD')
-        .forEach(act => {
-          let children;
-          if (act.childNodes && act.childNodes.length > 0) {
-            children = act.childNodes;
-          } else {
-            children = act.childText || 'Sample text';
-          }
-          this.addComponent({
-            index: act.index,
-            label: act.label,
-            props: act.props || {},
-            children,
+        actions
+          .filter(act => act.action === 'ADD')
+          .forEach(act => {
+            this.addComponent({
+              index: act.index,
+              label: act.label,
+              props: act.props || {}
+            });
           });
-        })
       }
     });
   }
@@ -115,24 +122,22 @@ class Craft extends React.Component {
         console.log('New update: ', latestUpdate);
         switch (latestUpdate.action) {
           case 'ADD':
-            let children;
-            if (latestUpdate.childNodes && latestUpdate.childNodes.length > 0) {
-              children = latestUpdate.childNodes;
-            } else {
-              children = latestUpdate.childText || 'Sample text';
-            }
             this.addComponent({
               index: latestUpdate.index,
               label: latestUpdate.label,
-              props: latestUpdate.props,
-              children,
+              props: latestUpdate.props
             });
             break;
-          
+
           case 'CONFIG':
             // Any config update is purely a global css update at this point
             this.updateAppConfig(latestUpdate, false);
             break;
+
+          case 'UPDATE':
+            this.updateCraft();
+            break;
+
           default:
             break;
         }
@@ -157,14 +162,11 @@ class Craft extends React.Component {
       }
       if (config.globalCss && config.globalCss !== false) {
         if (config.globalCss.backgroundColor) {
-          document.body.style.backgroundColor = config.globalCss.backgroundColor;
+          document.body.style.backgroundColor =
+            config.globalCss.backgroundColor;
         }
       }
-      return (
-        <React.Fragment>
-          {this.state.body}
-        </React.Fragment>
-      );
+      return <React.Fragment>{this.state.body}</React.Fragment>;
     }
   }
 }
