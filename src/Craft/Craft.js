@@ -60,7 +60,7 @@ class Craft extends React.Component {
       const propsObj = {};
       Object.keys(props).forEach(key => {
         if (key !== 'children') {
-          propsObj[key] = props[key].default;
+          propsObj[key] = props[key].value || props[key].default;
         }
       });
       propsObj.key = newBody.length;
