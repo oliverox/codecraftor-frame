@@ -71,7 +71,6 @@ class Craft extends React.Component {
           props.children.value || props.children.default
         )
       );
-      console.log('newBody=', newBody);
       this.setState({
         body: newBody
       });
