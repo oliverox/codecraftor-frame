@@ -1,53 +1,138 @@
 import React, { Component } from 'react';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
 import 'normalize.css/normalize.css';
-import './CraftFrame.scss';
 
-import Craft from '../Craft/Craft';
+// import styles from './CraftFrame.module.css';
 
-/* AppFrame */
-
-class AppFrame extends Component {
+class CraftFrame extends Component {
   constructor() {
     super();
-    this.handleMessageReceived = this.handleMessageReceived.bind(this);
+    this.state = {
+      loading: true,
+      page: false,
+      siteMeta: { updated: -1 }
+    };
+    this.key = 0;
+    this.meta = {};
+    this.components = {};
+    this.refreshPage = this.refreshPage.bind(this);
+    this.buildDomTree = this.buildDomTree.bind(this);
+    this.handleMsgRcvd = this.handleMsgRcvd.bind(this);
+    this.importComponents = this.importComponents.bind(this);
+    this.getComponentIndex = this.getComponentIndex.bind(this);
+    this.getComponentAndChildren = this.getComponentAndChildren.bind(this);
   }
-
-  componentWillMount() {
-    firebase.initializeApp({
-      apiKey: 'AIzaSyCZP85JmQhLbQG9GFoUFqbHApONOkoGZ5M',
-      authDomain: 'codecraftor-e8efe.firebaseapp.com',
-      databaseURL: 'https://codecraftor-e8efe.firebaseio.com',
-      projectId: 'codecraftor-e8efe',
-      storageBucket: 'codecraftor-e8efe.appspot.com',
-      messagingSenderId: '495590234980'
-    });
-  }
-
   componentDidMount() {
-    window.addEventListener('message', this.handleMessageReceived);
+    window.addEventListener('message', this.handleMsgRcvd);
+    this.refreshPage();
   }
 
   componentWillUnmount() {
-    window.removeEventListener('message', this.handleMessageReceived);
+    window.removeEventListener('message', this.handleMsgRcvd);
+  }
+  
+  refreshPage() {
+    if (this.state.siteMeta.updated === -1) {
+      return;
+    }
+    this.importComponents().then(() => {
+      this.buildDomTree();
+      this.setState({
+        loading: false
+      });
+    });
   }
 
-  handleMessageReceived(msg) {
-    if (msg.orgin === process.env.REACT_APP_MAIN_FRAME_URL) {
-      console.log('CW: msg received:', msg);
+  getComponentIndex(componentName) {
+    const { page } = this.state;
+    return this.meta.pages[page].imports.indexOf(componentName);
+  }
+  
+  importComponents() {
+    console.log('Importing components needed to render page...');
+    this.meta = this.state.siteMeta;
+    const { page } = this.state;
+    const componentImportArray = this.meta.pages[page].imports.map(componentName => {
+      console.log(`>> importing ${componentName}...`);
+      return import(`../components/${componentName}/${componentName}`);
+    });
+    return Promise.all(componentImportArray).then(importedComponents => {
+      let index = this.getComponentIndex(this.meta.pages[page].root.componentName);
+      this.components.root = {
+        Module: importedComponents[index].default,
+        props: this.meta.pages[page].root.props,
+        children: this.meta.pages[page].root.children
+      };
+      for (let i = 0; i < this.meta.pages[page].components.length; i++) {
+        console.log(
+          'updating component:',
+          this.meta.pages[page].components[i].componentName
+        );
+        const { id, props = '', children = [] } = this.meta.pages[page].components[i];
+        const componentIndex = this.getComponentIndex(
+          this.meta.pages[page].components[i].componentName
+        );
+        this.components[id] = {
+          Module: importedComponents[componentIndex].default,
+          props,
+          children
+        };
+      }
+    });
+  }
+
+  getComponentAndChildren(id) {
+    const { Module, props = '{}', children = [] } = this.components[id];
+    let childrenComponents = [];
+    if (children && children.length > 0) {
+      childrenComponents = children.map(childId => {
+        return this.getComponentAndChildren(childId);
+      });
+    }
+    return (
+      <Module key={this.key++} {...JSON.parse(props)}>
+        {childrenComponents.length > 0 ? childrenComponents : null}
+      </Module>
+    );
+  }
+
+  buildDomTree() {
+    console.log('buildDomTree()...');
+    this.rootComponent = this.getComponentAndChildren('root', 0);
+  }
+
+
+  handleMsgRcvd(msg) {
+    if (msg.origin !== process.env.REACT_APP_MAIN_FRAME_URL) {
+      return;
+    }
+    console.log('Craft msg rcvd:', msg.data);
+    const {siteMeta, page } = msg.data;
+    if (siteMeta.updated !== this.state.siteMeta.updated) {
+      this.setState({
+        siteMeta,
+        page
+      });
+      this.refreshPage();
     }
   }
 
   render() {
-    console.log('rendering CraftFrame');
+    console.log('Rendering Craft...');
     return (
-      <Router>
-        <Route path="/:craftId" exact component={Craft} />
-      </Router>
+      <>
+        {this.state.loading ? (
+          'Loading'
+        ) : (
+          <div>
+            {this.rootComponent}
+            {/* {process.env.NODE_ENV === 'development' ? (
+              <ComponentDrop page={this.meta.name} />
+            ) : null} */}
+          </div>
+        )}
+      </>
     );
   }
 }
 
-export default AppFrame;
+export default CraftFrame;
