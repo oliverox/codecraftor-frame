@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import ComponentDrop from '../ComponentDrop/ComponentDrop';
+
 import 'normalize.css/normalize.css';
 
 // import styles from './CraftFrame.module.css';
@@ -12,7 +14,7 @@ class CraftFrame extends Component {
       siteMeta: { updated: -1 }
     };
     this.key = 0;
-    this.meta = {};
+    this.siteMeta = {};
     this.components = {};
     this.refreshPage = this.refreshPage.bind(this);
     this.buildDomTree = this.buildDomTree.bind(this);
@@ -22,6 +24,11 @@ class CraftFrame extends Component {
     this.getComponentAndChildren = this.getComponentAndChildren.bind(this);
   }
   componentDidMount() {
+    if (process.env.NODE_ENV === 'development') {
+      import('typeface-montserrat').then(() => {
+        console.log('Montserrat typeface loaded');
+      })
+    }
     window.addEventListener('message', this.handleMsgRcvd);
     this.refreshPage();
   }
@@ -44,32 +51,32 @@ class CraftFrame extends Component {
 
   getComponentIndex(componentName) {
     const { page } = this.state;
-    return this.meta.pages[page].imports.indexOf(componentName);
+    return this.siteMeta.pages[page].imports.indexOf(componentName);
   }
   
   importComponents() {
     console.log('Importing components needed to render page...');
-    this.meta = this.state.siteMeta;
+    this.siteMeta = this.state.siteMeta;
     const { page } = this.state;
-    const componentImportArray = this.meta.pages[page].imports.map(componentName => {
+    const componentImportArray = this.siteMeta.pages[page].imports.map(componentName => {
       console.log(`>> importing ${componentName}...`);
       return import(`../components/${componentName}/${componentName}`);
     });
     return Promise.all(componentImportArray).then(importedComponents => {
-      let index = this.getComponentIndex(this.meta.pages[page].root.componentName);
+      let index = this.getComponentIndex(this.siteMeta.pages[page].root.componentName);
       this.components.root = {
         Module: importedComponents[index].default,
-        props: this.meta.pages[page].root.props,
-        children: this.meta.pages[page].root.children
+        props: this.siteMeta.pages[page].root.props,
+        children: this.siteMeta.pages[page].root.children
       };
-      for (let i = 0; i < this.meta.pages[page].components.length; i++) {
+      for (let i = 0; i < this.siteMeta.pages[page].components.length; i++) {
         console.log(
           'updating component:',
-          this.meta.pages[page].components[i].componentName
+          this.siteMeta.pages[page].components[i].componentName
         );
-        const { id, props = '', children = [] } = this.meta.pages[page].components[i];
+        const { id, props = '', children = [] } = this.siteMeta.pages[page].components[i];
         const componentIndex = this.getComponentIndex(
-          this.meta.pages[page].components[i].componentName
+          this.siteMeta.pages[page].components[i].componentName
         );
         this.components[id] = {
           Module: importedComponents[componentIndex].default,
@@ -125,9 +132,9 @@ class CraftFrame extends Component {
         ) : (
           <div>
             {this.rootComponent}
-            {/* {process.env.NODE_ENV === 'development' ? (
-              <ComponentDrop page={this.meta.name} />
-            ) : null} */}
+            {process.env.NODE_ENV === 'development' ? (
+              <ComponentDrop page={this.siteMeta.name} />
+            ) : null}
           </div>
         )}
       </>
