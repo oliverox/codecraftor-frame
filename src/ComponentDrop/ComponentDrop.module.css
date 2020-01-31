@@ -1,5 +1,7 @@
 .dropContainer {
   display: flex;
+  width: 500px;
+  height: 500px;
   align-items: center;
   justify-content: center;
   padding: 30px;
